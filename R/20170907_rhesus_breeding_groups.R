@@ -27,7 +27,29 @@ ped$death_date <- format(ped$death_date, format = "%Y-%m-%d")
 ped$id <- stri_trim_both(ped$id)
 ped$sire_id <- stri_trim_both(ped$sire_id)
 ped$dam_id <- stri_trim_both(ped$dam_id)
-ped_qc <- qc.Studbook(ped)
+ped_qc <- qcStudbook(ped)
 
 write.csv(ped_qc, file = "../reports/2017_rhesus_breeding_groups_ped.csv",
           row.names = FALSE)
+p <- ped_qc
+p["ped.num"] <- findPedigreeNumber(p$id, p$sire, p$dam)
+p["gen"] <- findGeneration(p$id, p$sire, p$dam)
+updateProgress <- function(n = 1, detail = NULL, value = 0, reset = FALSE) {
+  if (reset) {
+    progress$set(detail = detail, value = value)
+  } else{
+    progress$inc(amount = 1/n)
+  }
+}
+gv <- reportGV(p, gu.iter = 10,
+               gu.thresh = 0L,
+               by.id = TRUE,
+               updateProgress = NULL)
+## ignore can be set to list(c("F", "F")), but this causes all female 
+## relatedness to be ignored which does not make sense for breeding group 
+## formation.
+## 
+grp <- groupAssign(female_breeders$id, gv[["kinship"]], p, 
+                   threshold = 0L, ignore = NULL, 
+                   min.age = 0L, iter = 10, numGp = 4L, 
+                   updateProgress = NULL)
