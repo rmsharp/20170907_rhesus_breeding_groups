@@ -22,8 +22,14 @@ conn <- odbcConnect("frogstar-vortex-animal-sa")
 ped <- get_direct_ancestors(conn, new_rh_df$id)
 ped <- add_birth_date(conn, ped)
 ped <- add_death_date(conn, ped)
+ped <- add_departure_date(conn, ped)
+names(ped)[names(ped) == "date"] <- "departure"
+ped$description <- NULL
+ped$dispositionType <- NULL
+
 ped$birth_date <- format(ped$birth_date, format = "%Y-%m-%d")
 ped$death_date <- format(ped$death_date, format = "%Y-%m-%d")
+ped$departure <- format(ped$departure, format = "%Y-%m-%d")
 ped$id <- stri_trim_both(ped$id)
 ped$sire_id <- stri_trim_both(ped$sire_id)
 ped$dam_id <- stri_trim_both(ped$dam_id)
@@ -31,16 +37,14 @@ ped_qc <- qcStudbook(ped)
 
 write.csv(ped_qc, file = "../reports/2017_rhesus_breeding_groups_ped.csv",
           row.names = FALSE)
+bab_df <- read.csv(file = "/Users/msharp/Documents/Development/R/r_workspace/library/nprcmanager/inst/extdata/baboon_breeders_ped_genotype.csv", 
+                   header = TRUE, sep = ",", 
+                   stringsAsFactors = FALSE)
+bab_qc <- qcStudbook(bab_df)
+#p <- bab_qc
 p <- ped_qc
 p["ped.num"] <- findPedigreeNumber(p$id, p$sire, p$dam)
 p["gen"] <- findGeneration(p$id, p$sire, p$dam)
-updateProgress <- function(n = 1, detail = NULL, value = 0, reset = FALSE) {
-  if (reset) {
-    progress$set(detail = detail, value = value)
-  } else{
-    progress$inc(amount = 1/n)
-  }
-}
 gv <- reportGV(p, gu.iter = 10,
                gu.thresh = 0L,
                by.id = TRUE,
@@ -49,7 +53,28 @@ gv <- reportGV(p, gu.iter = 10,
 ## relatedness to be ignored which does not make sense for breeding group 
 ## formation.
 ## 
+bab_breeders <- c("1X0872",
+                  "1X0945",
+                  "1X0951",
+                  "1X1032",
+                  "1X1125",
+                  "1X1126",
+                  "1X1146",
+                  "1X1152",
+                  "1X1155",
+                  "1X1181",
+                  "1X1237",
+                  "1X1288",
+                  "1X1487",
+                  "1X1672",
+                  "1X1765",
+                  "1X1773",
+                  "1X1939",
+                  "1X1947",
+                  "1X2055",
+                  "1X2645")
+
 grp <- groupAssign(female_breeders$id, gv[["kinship"]], p, 
-                   threshold = 0L, ignore = NULL, 
+                   threshold = 0.015, ignore = NULL, 
                    min.age = 0L, iter = 10, numGp = 4L, 
                    updateProgress = NULL)
