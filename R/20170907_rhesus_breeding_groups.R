@@ -15,6 +15,7 @@ rh_df$mamu2 <- stri_c(rh_df$Mamu.A.Haplotype.2, "_",
 new_rh_df <- rh_df[ , c(1, 7, 8, 2)]
 names(new_rh_df) <- c("id", "mamu1", "mamu2", "sex")
 female_breeders <- data.frame(id = new_rh_df$id[new_rh_df$sex == "F"])
+female_breeders$id <- as.character(female_breeders$id)
 write.csv(female_breeders, file = "../reports/2017_rhesus_female_breeders.csv",
           row.names = FALSE)
 
@@ -37,10 +38,10 @@ ped_qc <- qcStudbook(ped)
 
 write.csv(ped_qc, file = "../reports/2017_rhesus_breeding_groups_ped.csv",
           row.names = FALSE)
-bab_df <- read.csv(file = "/Users/msharp/Documents/Development/R/r_workspace/library/nprcmanager/inst/extdata/baboon_breeders_ped_genotype.csv", 
-                   header = TRUE, sep = ",", 
-                   stringsAsFactors = FALSE)
-bab_qc <- qcStudbook(bab_df)
+#bab_df <- read.csv(file = "/Users/msharp/Documents/Development/R/r_workspace/library/nprcmanager/inst/extdata/baboon_breeders_ped_genotype.csv", 
+#                   header = TRUE, sep = ",", 
+#                   stringsAsFactors = FALSE)
+#bab_qc <- qcStudbook(bab_df)
 #p <- bab_qc
 p <- ped_qc
 p["ped.num"] <- findPedigreeNumber(p$id, p$sire, p$dam)
@@ -73,8 +74,20 @@ bab_breeders <- c("1X0872",
                   "1X1947",
                   "1X2055",
                   "1X2645")
-
+numGp <- 2L
 grp <- groupAssign(female_breeders$id, gv[["kinship"]], p, 
-                   threshold = 0.015, ignore = NULL, 
-                   min.age = 0L, iter = 10, numGp = 4L, 
-                   updateProgress = NULL)
+                   threshold = 0.0625, ignore = NULL, 
+                   min.age = 0L, iter = 3, numGp = numGp, 
+                   updateProgress = NULL, withKin = TRUE)
+i <- 1
+grp$group[[i]]; grp$score; grp$groupKin[[i]]
+i <- 2
+grp$group[[i]]; grp$score; grp$groupKin[[i]]
+i <- 3
+grp$group[[i]]; grp$score; grp$groupKin[[i]]
+i <- 4
+grp$group[[i]]; grp$score; grp$groupKin[[i]]
+i <- 5
+grp$group[[i]]; grp$score; grp$groupKin[[i]]
+kmat <- filterKinMatrix(female_breeders$id, gv[["kinship"]])
+print(kmat)
